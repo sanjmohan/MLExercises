@@ -1,8 +1,6 @@
 # Multiple Linear Regression on Housing Price given 13 attributes
 # First time using theano!
 
-# TODO: theano symbolic differentiation
-
 import numpy as np
 import theano
 from theano import tensor as T
@@ -11,8 +9,9 @@ import matplotlib.pyplot as plt
 
 
 def load_data():
-    # load first 13 values as feature, load last value as target
-    # matrix of all examples (row = example, column = feature)
+    # Features separated by space, examples separated by line breaks
+    # Load first 13 values as feature, load last value as target
+    # Matrix of all examples (row = example, column = feature)
     x = []
     # matrix of all target values
     y = []
@@ -29,7 +28,22 @@ def load_data():
     return x, y
 
 
+def normalize(data):
+    # Rescale features to lie on range [0, 1]
+    # Transpose => each row is a feature
+    xT = np.asarray(data).T
+    # Skip first placeholder "feature"
+    for i in range(1, len(xT[1:])):
+        feature = xT[i]
+        min_val = min(feature)
+        max_val = max(feature)
+        feature = (feature - min_val) / (max_val - min_val)
+        xT[i] = feature
+    return (xT.T).tolist()
+
+
 x_in, y_in = load_data()
+x_in = normalize(x_in)
 num_test = 100
 num_train = len(x_in) - num_test
 
@@ -63,8 +77,11 @@ cost = theano.function([x, y], c, name="cost")
 # gc = 1/num_train * T.dot(x.T, (pred - y))
 
 # gradient descent update function
-lr = 0.000006
-# (shared var to update, expression representing update)
+# learning rate
+lr = 0.01
+print("Learning Rate: %f" % lr)
+# update format: (shared var to update, expression representing update)
+# featuring symbolic differentiation!
 updates = [(theta, theta - lr * T.grad(c, theta))]
 grad_desc = theano.function([x, y], theta, updates=updates, name="grad_desc")
 
@@ -75,10 +92,20 @@ iters = 3000
 for i in range(iters):
     grad_desc(train_x, train_y)
     accuracy.append(cost(train_x, train_y))
-    if i % (iters // 20) == 0:
-        print("Iteration", i)
+    if i % (iters // 20) == 0 or i == iters - 1:
+        print("Iteration %d" % (i+1))
 
-print("Minimum Cost: %d" % min(accuracy))
+print("Minimum Cost: %f" % min(accuracy))
 # show (hopefully) decreasing cost
 plt.plot(range(iters), accuracy)
 plt.show()
+
+# 300 iters, lr = 0.000006: min cost = 36
+# (higher lr explodes)
+# 300 iters w/normalization, lr = 0.000006: min cost = 261
+# 300 iters w/normalization, lr = 0.01: min cost = 21
+# (higher lr explodes)
+
+# 3000 iters, lr = 0.000006: min cost = 27
+# 3000 iters w/normalization: min cost = 178
+# 3000 iters w/normalization, lr = 0.01: min cost = 14
