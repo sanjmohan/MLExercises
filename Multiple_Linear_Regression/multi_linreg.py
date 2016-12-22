@@ -67,7 +67,7 @@ y = T.matrix('y')
 pred = T.dot(x, theta)
 
 # least mean square cost function
-c = (1 / (2 * num_train)) * ((pred - y) ** 2).sum()
+c = 0.5 * T.mean((pred - y) ** 2)
 
 # function([symbolic inputs], output, name=name)
 cost = theano.function([x, y], c, name="cost")
