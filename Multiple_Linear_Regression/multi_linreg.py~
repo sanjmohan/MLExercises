@@ -1,0 +1,4 @@
+# Multiple Linear Regression on Housing Price given 13 attributes
+
+def cost(X)
+
