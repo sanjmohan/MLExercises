@@ -51,6 +51,9 @@ num_train = len(x_in) - num_test
 train_x = np.asarray(x_in[:-num_test])
 train_y = np.asarray(y_in[:-num_test]).reshape(num_train, 1)
 
+test_x = np.asarray(x_in[-num_test:])
+test_y = np.asarray(y_in[-num_test:]).reshape(num_test, 1)
+
 print("Data Size: %d" % len(x_in))
 print("Number of Features: %d" % (len(x_in[0])-1)) # first "feature" is placeholder
 print("Training Size: %d" % num_train)
@@ -95,17 +98,19 @@ for i in range(iters):
     if i % (iters // 20) == 0 or i == iters - 1:
         print("Iteration %d" % (i+1))
 
-print("Minimum Cost: %f" % min(accuracy))
+print("Minimum Training Cost: %f" % min(accuracy))
+print("Test Cost: %f" % cost(test_x, test_y))
 # show (hopefully) decreasing cost
 plt.plot(range(iters), accuracy)
 plt.show()
 
+
 # 300 iters, lr = 0.000006: min cost = 36
 # (higher lr explodes)
 # 300 iters w/normalization, lr = 0.000006: min cost = 261
-# 300 iters w/normalization, lr = 0.01: min cost = 21
+# 300 iters w/normalization, lr = 0.01: min cost = 21, test cost = 13
 # (higher lr explodes)
 
 # 3000 iters, lr = 0.000006: min cost = 27
 # 3000 iters w/normalization: min cost = 178
-# 3000 iters w/normalization, lr = 0.01: min cost = 14
+# 3000 iters w/normalization, lr = 0.01: min cost = 14, test cost = 17
