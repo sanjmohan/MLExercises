@@ -48,9 +48,8 @@ x = T.matrix('x')
 y = T.matrix('y')
 
 # Initialize network
-# layers - list of nodes in each layer
-#        - eg. [784, 100, 10]
-layers = [784, 30, 10]
+# layers - list of nodes in each layer (including input)
+layers = [784, 100, 10]
 # Params of network
 weights = []
 biases = []
@@ -67,12 +66,16 @@ for i in range(1, len(layers)):
 
 feedforward = theano.function([x], f, name="feedforward")
 
-# MSE Cost function
-c = T.mean((f - y) ** 2)
+# Regularization factor
+alpha = 0.005
+# MSE Cost function with L2 Regularization
+#c = T.mean((f - y) ** 2) + T.mean(w ** 2)
+# Cross Entropy cost function with L2 Regularization
+c = T.mean(T.nnet.binary_crossentropy(f, y)) + alpha * T.mean(w ** 2)
 cost = theano.function([x, y], c, name="cost")
 
 # Backprop function
-learning_rate = 0.5
+learning_rate = 0.4
 updates = list((w, w - learning_rate * T.grad(c, w)) for w in weights)
 updates += list((b, b - learning_rate * T.grad(c, b)) for b in biases)
 backprop = theano.function([x, y], c, updates=updates, name="backprop")
@@ -88,11 +91,12 @@ def evaluate(data):
 
 
 # Gradient Descent
-epochs = 50
-mb_size = 10
+epochs = 150
+mb_size = 5
 
 print("Epochs: %d" % epochs)
 print("Learning Rate: %f" % learning_rate)
+print("Alpha (L2): %f" % alpha)
 print("Training Size: %d" % len(training))
 print("Minibatch Size: %d" % mb_size)
 print("Training Network", layers, "...")
@@ -107,7 +111,7 @@ for epoch in range(epochs):
     print("Epoch %d" % epoch)
     t_elapsed = time.time() - t_start
     if epoch != 0:
-        print("Elapsed: %d; Estimated Left: %d" % (t_elapsed, t_elapsed/epoch * (epochs-epoch)))
+        print("Elapsed: %ds; Estimated Left: %ds" % (t_elapsed, t_elapsed/epoch * (epochs-epoch)))
 
     # Generate minibatches
     np.random.shuffle(training)
@@ -121,13 +125,22 @@ for epoch in range(epochs):
         backprop(np.hstack(x), np.hstack(y))
 
     # Intermediate training and validation accuracies
-    train_accuracy.append(evaluate(training))
+#    train_accuracy.append(evaluate(training))
     val_accuracy.append(evaluate(validation))
 
-# TODO: Write params
+# Test evaluation
+print("Test Accuracy: %f" % evaluate(test))
+
+# TODO: Write params to file
 
 # Plot
-plt.plot(range(epochs), train_accuracy, 'b-', label="training accuracy")
+#plt.plot(range(epochs), train_accuracy, 'b-', label="training accuracy")
 plt.plot(range(epochs), val_accuracy, 'r-', label="validation accuracy")
 plt.legend()
 plt.show()
+
+
+# [784, 30, 10], mse, learning rate: 0.5, minibatch size: 10, epochs: 50 -- 92.62%, 247s
+# [784, 300, 10], mse + l2 reg (alpha = 1), learning rate: 0.3, minibatch size: 5, epochs: 100 -- 93.34%, 2375s
+# [784, 100, 10], cross-entropy + l2 reg (alpha = 0.1), learning rate: 0.3, minibatch size: 5, epochs: 150 -- 95.71%, 813s
+# [784, 100, 10], cross-entropy + l2 reg (alpha = 0.005), learning rate: 0.4, minibatch size: 5, epochs: 150 -- 96.69%, 793s
