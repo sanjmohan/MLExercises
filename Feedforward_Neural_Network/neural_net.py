@@ -49,7 +49,7 @@ y = T.matrix('y')
 
 # Initialize network
 # layers - list of nodes in each layer (including input)
-layers = [784, 100, 10]
+layers = [784, 200, 10]
 # Params of network
 weights = []
 biases = []
@@ -91,7 +91,7 @@ def evaluate(data):
 
 
 # Gradient Descent
-epochs = 150
+epochs = 100
 mb_size = 5
 
 print("Epochs: %d" % epochs)
@@ -144,3 +144,4 @@ plt.show()
 # [784, 300, 10], mse + l2 reg (alpha = 1), learning rate: 0.3, minibatch size: 5, epochs: 100 -- 93.34%, 2375s
 # [784, 100, 10], cross-entropy + l2 reg (alpha = 0.1), learning rate: 0.3, minibatch size: 5, epochs: 150 -- 95.71%, 813s
 # [784, 100, 10], cross-entropy + l2 reg (alpha = 0.005), learning rate: 0.4, minibatch size: 5, epochs: 150 -- 96.69%, 793s
+# [784, 200, 10], cross-entropy + l2 reg (alpha = 0.005), learning rate: 0.4, minibatch size: 5, epochs: 100 -- 96.79%, 2718s
