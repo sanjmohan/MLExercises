@@ -28,21 +28,25 @@ def load_data(file):
     return x, y
 
 
-def normalize(data):
+def normalize(*data):
     """
     Rescale features to lie on range [0, 1]
     Transpose => each row is a feature
+    Assumes first parameter is training data
+    - uses training data features to normalize
     """
-    xT = np.asarray(data).T
+    dataT = [np.asarray(d).T for d in data]
     # Skip first placeholder "feature"; normalize next 3 columns
     # (all other values are range [-1, 1] already)
     for i in range(1, 4):
-        feature = xT[i]
-        min_val = min(feature)
-        max_val = max(feature)
-        feature = (feature - min_val) / (max_val - min_val)
-        xT[i] = feature
-    return xT.T
+        feature = [xT[i] for xT in dataT]
+        # Use training data for min/max values
+        min_val = min(feature[0])
+        max_val = max(feature[0])
+        feature = [(f - min_val) / (max_val - min_val) for f in feature]
+        for j in range(len(dataT)):
+            dataT[j][i] = feature[j]
+    return [xT.T for xT in dataT]
     
 
 print("Loading Data...")
@@ -67,8 +71,7 @@ test_y = np.asfarray(test_y_in)
 # Column vector
 test_y = test_y.reshape(len(test_y), 1)
 
-train_x = normalize(train_x)
-test_x = normalize(test_x)
+train_x, test_x = normalize(train_x, test_x)
 
 print("Data loaded\n")
 
