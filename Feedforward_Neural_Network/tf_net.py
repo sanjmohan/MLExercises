@@ -5,30 +5,32 @@
 
 # <h2>Imports / magic (%)</h2>
 
-# In[4]:
+# In[20]:
 
+import time
 import numpy as np
-from mnist_loader import load
-
 get_ipython().magic('matplotlib inline')
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
+
+from mnist_loader import load
+
 # compiles operation graphs at intermediate steps (instead of at end)
 sess = tf.InteractiveSession()
 
 
 # <h2>Hyper Parameters</h2>
 
-# In[19]:
+# In[21]:
 
 # Hyper params
 INPUT_SIZE = 784
 HIDDEN_SIZE = 200
 OUTPUT_SIZE = 10
 
-LEARNING_RATE = 0.5
-EPOCHS = None
+LEARNING_RATE = 0.3
+EPOCHS = 400
 MINIBATCH_SIZE = 5
 
 
@@ -40,20 +42,27 @@ MINIBATCH_SIZE = 5
 # </ul></p>
 # <p>ie. an m x n matrix has m training examples each with n features.</p>
 
-# In[20]:
+# In[22]:
 
 # Load data
 path = "Data\mnist.pkl.gz"
 train_data, validation_data, test_data = load(path)
 
+# Tuples of (img, label) --> list of imgs, list of labels
+train_imgs, train_labels = zip(*train_data)
+train_imgs = np.vstack(train_imgs)
+# Tuples of (img, label) --> list of imgs, list of labels
+vali_imgs, vali_labels = zip(*validation_data)
+vali_imgs = np.vstack(vali_imgs)
+
 # Placeholder vars
 # float pixel values of images
-inputs = tf.placeholder(tf.float32)
+inputs = tf.placeholder(tf.float32, name="inputs")
 # integer target labels of each image
-labels = tf.placeholder(tf.int32)
+labels = tf.placeholder(tf.int32, name="labels")
 
-# Change first index of train_data to see other images
-plt.imshow(np.reshape(train_data[0][0], (28, 28)))
+# Change index of train_imgs to see other images
+plt.imshow(np.reshape(train_imgs[0], (28, 28)))
 
 
 # <h2>Initialize Layers:</h2>
@@ -71,7 +80,7 @@ plt.imshow(np.reshape(train_data[0][0], (28, 28)))
 # <p>This initialization prevents saturation in activation function with a narrow distribution and (ideally) leads to faster learning.</p>
 # <p>The biases are initialized as an all-zero column vector.</p>
 
-# In[24]:
+# In[23]:
 
 with tf.name_scope("hidden"):
     weights = tf.Variable(
@@ -79,6 +88,7 @@ with tf.name_scope("hidden"):
                              stddev=(1 / (INPUT_SIZE ** 0.5))),
         name="weights")
     biases = tf.Variable(tf.zeros([HIDDEN_SIZE]), name="biases")
+    # inputs is placeholder, weights and biases are Variables
     hidden = tf.sigmoid(tf.matmul(inputs, weights) + biases)
 
 with tf.name_scope("output"):
@@ -92,9 +102,22 @@ with tf.name_scope("output"):
     logits = tf.matmul(hidden, weights2) + biases2
 
 
+# ## Evaluation / feedforward operations
+
+# In[24]:
+
+# Op for a feedforward pass
+# Reduce across dimension 1 (col) to get argmax of each row
+feedforward = tf.argmax(tf.nn.softmax(logits), 1)
+
+# Op for evaluating accuracy against labels
+comparison = tf.equal(tf.cast(feedforward, tf.int32), labels)
+evaluation = tf.reduce_mean(tf.cast(comparison, tf.float32))
+
+
 # ## Initialize Training Operations
 
-# In[26]:
+# In[25]:
 
 # Softmax activation with cross entropy cost
 xent = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name="xent")
@@ -107,19 +130,44 @@ sgd = tf.train.GradientDescentOptimizer(LEARNING_RATE)
 train = sgd.minimize(cost, global_step=global_step)
 
 
-# In[ ]:
+# In[26]:
 
-# All variables should have been constructed by now
-sess.run(tf.init_all_variables())
+# All variables should have been constructed by now - now initialize
+sess.run(tf.global_variables_initializer())
+# Operation for saving params
+saver = tf.train.Saver()
 
 
 # ## Training
 
-# In[2]:
+# In[27]:
 
+t0 = time.time()
+costs = []
+vali_accuracy = []
 for i in range(EPOCHS):
-    # Returns activations from "train" and "cost"
-    _, cost_val = sess.run([train, cost], feed_dict=)
+    # Returns activations from "train", "cost", and "eval"
+    _, cost_val = sess.run([train, cost], feed_dict={inputs: train_imgs, labels: train_labels})
+    eval_acc = sess.run([evaluation], feed_dict={inputs: vali_imgs, labels: vali_labels})
+    costs.append(cost_val)
+    vali_accuracy.append(eval_acc)
+    
+    if i > 0 and i % (EPOCHS // 10) == 0:
+        dt = time.time() - t0
+        print("Epoch: {}, time elapsed: {}, time to go: {}".format(
+                i, dt, dt / i * (EPOCHS - i)))
+
+##saver.save(sess, "checkpoint", global_step=i)
+
+
+# In[28]:
+
+plt.plot(range(EPOCHS), costs, label="costs")
+
+
+# In[29]:
+
+plt.plot(range(EPOCHS), vali_accuracy, label="validation accuracy")
 
 
 # In[ ]:

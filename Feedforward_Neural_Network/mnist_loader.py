@@ -36,9 +36,9 @@ def load(path, expanded=False):
     training, validation, test = load_data(path, expanded)
     # For each image in training (list of pixels), reshape it into a 784-length row vector
     trainingImages = [np.reshape(array, (1, 784)) for array in training[0]]
-    trainingLabels = [vectorize(digit) for digit in training[1]]
+    ##trainingLabels = [vectorize(digit) for digit in training[1]]
     # Zip the two sets (images, labels) together into a tuple
-    trainingData = zip(trainingImages, trainingLabels)
+    trainingData = zip(trainingImages, training[1])
 
     validationImages = [np.reshape(array, (1, 784)) for array in validation[0]]
     validationData = zip(validationImages, validation[1])
