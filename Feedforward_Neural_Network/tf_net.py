@@ -5,7 +5,7 @@
 
 # <h2>Imports / magic (%)</h2>
 
-# In[22]:
+# In[1]:
 
 import time
 import numpy as np
@@ -22,16 +22,21 @@ sess = tf.InteractiveSession()
 
 # <h2>Hyper Parameters</h2>
 
-# In[30]:
+# In[2]:
 
-# Hyper params
+# Hyper params and constants
+IMAGE_SIZE = 28
+
 INPUT_SIZE = 784
 HIDDEN_SIZE = 200
 OUTPUT_SIZE = 10
 
 LEARNING_RATE = 0.3
-EPOCHS = 200
+EPOCHS = 50
 MINIBATCH_SIZE = 5
+
+# File to save trained model to
+SAVE_FILE = "C:/Users/Sanjay/Desktop/model"
 
 
 # ## Load Data and Input Placeholders
@@ -42,7 +47,7 @@ MINIBATCH_SIZE = 5
 # </ul></p>
 # <p>ie. an m x n matrix has m training examples each with n features.</p>
 
-# In[24]:
+# In[3]:
 
 # Load data
 path = "Data\mnist.pkl.gz"
@@ -65,7 +70,7 @@ inputs = tf.placeholder(tf.float32, name="inputs")
 labels = tf.placeholder(tf.int32, name="labels")
 
 # Change index of train_imgs to see other images
-plt.imshow(np.reshape(train_imgs[0], (28, 28)))
+plt.imshow(np.reshape(train_imgs[0], (IMAGE_SIZE, IMAGE_SIZE)))
 
 
 # <h2>Initialize Layers:</h2>
@@ -83,7 +88,7 @@ plt.imshow(np.reshape(train_imgs[0], (28, 28)))
 # <p>This initialization prevents saturation in activation function with a narrow distribution and (ideally) leads to faster learning.</p>
 # <p>The biases are initialized as an all-zero column vector.</p>
 
-# In[25]:
+# In[4]:
 
 with tf.name_scope("hidden"):
     weights = tf.Variable(
@@ -107,7 +112,7 @@ with tf.name_scope("output"):
 
 # ## Evaluation / feedforward operations
 
-# In[26]:
+# In[5]:
 
 # Op for a feedforward pass
 # Reduce across dimension 1 (col) to get argmax of each row
@@ -120,7 +125,7 @@ evaluation = tf.reduce_mean(tf.cast(comparison, tf.float32))
 
 # ## Initialize Training Operations
 
-# In[27]:
+# In[ ]:
 
 # Softmax activation with cross entropy cost
 xent = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name="xent")
@@ -133,7 +138,7 @@ sgd = tf.train.GradientDescentOptimizer(LEARNING_RATE)
 train = sgd.minimize(cost, global_step=global_step)
 
 
-# In[28]:
+# In[ ]:
 
 # All variables should have been constructed by now - now initialize
 sess.run(tf.global_variables_initializer())
@@ -143,7 +148,7 @@ saver = tf.train.Saver()
 
 # ## Training
 
-# In[31]:
+# In[ ]:
 
 t0 = time.time()
 costs = []
@@ -160,33 +165,44 @@ for i in range(EPOCHS):
         print("Epoch: {}, time elapsed: {}, time to go: {}".format(
                 i, dt, dt / i * (EPOCHS - i)))
 
-print("Training complete. Total epochs: {}; total time elapsed: {}".format(EPOCHS, time.time() - t0))        
-##saver.save(sess, "checkpoint", global_step=i)
+print("Training complete. Total epochs: {}; total time elapsed: {}".format(EPOCHS, time.time() - t0))
 
 
-# In[32]:
+# In[ ]:
+
+# Save to checkpoint file - binary file mapping Variables to values
+# global_step= option numbers checkpoint file with value of global_step
+saver.save(sess, SAVE_FILE, global_step=None)
+
+
+# In[ ]:
 
 plt.plot(range(EPOCHS), costs, label="costs")
 
 
-# In[33]:
+# In[ ]:
 
 plt.plot(range(EPOCHS), vali_accuracy, label="validation accuracy")
 
 
-# In[78]:
+# In[11]:
 
 # Show random test image and calculated classification
 rand_ind = np.random.randint(len(test_imgs))
 guess = sess.run([feedforward], feed_dict={inputs: test_imgs[rand_ind:rand_ind+1]})
 ##guess = sess.run([feedforward], feed_dict={inputs: train_imgs, labels: train_labels})
 print("Guess: {}".format(guess[0]))
-plt.imshow(np.reshape(test_imgs[rand_ind], (28, 28)))
+plt.imshow(np.reshape(test_imgs[rand_ind], (IMAGE_SIZE, IMAGE_SIZE)))
 
 
-# In[ ]:
+# 
+# ## Restoring Variables from Files
 
+# In[12]:
 
+sess.run(tf.global_variables_initializer())
+saver = tf.train.Saver()
+saver.restore(sess, SAVE_FILE)
 
 
 # In[ ]:
