@@ -25,6 +25,7 @@ def load_data(path, expanded):
     return training, validation, test
 
 
+#TODO: One hot option (vectorize labels)
 def load(path, expanded=False):
     """
     Reformat arrays of images and labels so each index of the final list contains an image and corresponding label.
