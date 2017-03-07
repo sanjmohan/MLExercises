@@ -1,0 +1,5 @@
+# ignore ipynb checkpoints
+# ** as wildcard directory
+**/.ipynb*
+
+**/__pycache__
